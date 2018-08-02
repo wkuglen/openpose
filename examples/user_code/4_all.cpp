@@ -51,12 +51,7 @@ DEFINE_double(camera_fps,               30.0,           "Frame rate for the webc
                                                         " value between the OpenPose displayed speed and the webcam real frame rate.");
 DEFINE_string(video,                    "",             "Use a video file instead of the camera. Use `examples/media/video.avi` for our default"
                                                         " example video.");
-DEFINE_string(image_dir,                "",             "Process a directory of images. Use `examples/media/` for our default example folder with 20"
-                                                        " images. Read all standard formats (jpg, png, bmp, etc.).");
-
-DEFINE_string(image_dir,                "examples/media/",      "Process a directory of images. Read all standard formats (jpg, png, bmp, etc.).");
-DEFINE_double(camera_fps,               30.0,           "Frame rate for the webcam (also used when saving video). Set this value to the minimum"
-                                                        " value between the OpenPose displayed speed and the webcam real frame rate.");
+DEFINE_string(image_dir,                "",      "Process a directory of images. Read all standard formats (jpg, png, bmp, etc.).");
 // OpenPose
 DEFINE_string(model_folder,             "models/",      "Folder path (absolute or relative) where the models (pose, face, ...) are located.");
 DEFINE_string(output_resolution,        "-1x-1",        "The image resolution (display and output). Use \"-1x-1\" to force the program to use the"
@@ -245,6 +240,10 @@ struct UserDatum : public op::Datum
     }
 };
 
+
+/************************************
+
+
 // The W-classes can be implemented either as a template or as simple classes given
 // that the user usually knows which kind of data he will move between the queues,
 // in this case we assume a std::shared_ptr of a std::vector of UserDatum
@@ -313,6 +312,9 @@ private:
     const std::vector<std::string> mImageFiles;
     unsigned long long mCounter;
 };
+************************************************/
+
+
 
 // This worker will just invert the image
 class WUserPostProcessing : public op::Worker<std::shared_ptr<std::vector<UserDatum>>>
@@ -522,10 +524,14 @@ int openPoseTutorialWrapper2()
         // handNetInputSize
         const auto handNetInputSize = op::flagsToPoint(FLAGS_hand_net_resolution, "368x368 (multiples of 16)");
         // producerType
-        const auto producerSharedPtr = op::flagsToProducer(FLAGS_image_dir, FLAGS_video, FLAGS_ip_camera, FLAGS_camera,
-                                                           FLAGS_flir_camera, FLAGS_camera_resolution, FLAGS_camera_fps,
-                                                           FLAGS_camera_parameter_folder, !FLAGS_frame_keep_distortion,
-                                                           (unsigned int) FLAGS_3d_views, FLAGS_flir_camera_index);
+        const auto producerSharedPtr = op::flagsToProducer(FLAGS_image_dir, FLAGS_video, "", FLAGS_camera,
+                                                           false, FLAGS_camera_resolution, FLAGS_camera_fps,
+                                                           "models/cameraParameters/flir/", !false,
+                                                           (unsigned int) 1, -1);
+        // const auto producerSharedPtr = op::flagsToProducer(FLAGS_image_dir, FLAGS_video, FLAGS_ip_camera, FLAGS_camera,
+        //                                                    FLAGS_flir_camera, FLAGS_camera_resolution, FLAGS_camera_fps,
+        //                                                    FLAGS_camera_parameter_folder, !FLAGS_frame_keep_distortion,
+        //                                                    (unsigned int) FLAGS_3d_views, FLAGS_flir_camera_index);
 
         // poseModel
         const auto poseModel = op::flagsToPoseModel(FLAGS_model_pose);
@@ -548,7 +554,7 @@ int openPoseTutorialWrapper2()
 
         // Initializing the user custom classes
         // Frames producer (e.g. video, webcam, ...)
-        auto wUserInput = std::make_shared<WUserInput>(FLAGS_image_dir);
+        // auto wUserInput = std::make_shared<WUserInput>(FLAGS_image_dir);
         // Processing
         auto wUserPostProcessing = std::make_shared<WUserPostProcessing>();
         // GUI (Display)
@@ -556,8 +562,8 @@ int openPoseTutorialWrapper2()
 
         op::Wrapper<std::vector<UserDatum>> opWrapper;
         // Add custom input
-        const auto workerInputOnNewThread = false;
-        opWrapper.setWorkerInput(wUserInput, workerInputOnNewThread);
+        // const auto workerInputOnNewThread = false;
+        // opWrapper.setWorkerInput(wUserInput, workerInputOnNewThread);
         // Add custom processing
         const auto workerProcessingOnNewThread = false;
         opWrapper.setWorkerPostProcessing(wUserPostProcessing, workerProcessingOnNewThread);
@@ -589,8 +595,8 @@ int openPoseTutorialWrapper2()
         const bool guiVerbose = false;
         const bool fullScreen = false;
         const op::WrapperStructInput wrapperStructInput{
-            producerSharedPtr, FLAGS_frame_first, FLAGS_frame_last, FLAGS_process_real_time, FLAGS_frame_flip,
-            FLAGS_frame_rotate, FLAGS_frames_repeat};
+            producerSharedPtr, 0, static_cast<unsigned long long>(-1), false, false,
+            0, false};
         const op::WrapperStructOutput wrapperStructOutput{
             displayMode, guiVerbose, fullScreen, FLAGS_write_keypoint,
             op::stringToDataFormat(FLAGS_write_keypoint_format), FLAGS_write_json, FLAGS_write_coco_json,
@@ -599,7 +605,7 @@ int openPoseTutorialWrapper2()
             FLAGS_write_bvh, FLAGS_udp_host, FLAGS_udp_port};
         // Configure wrapper
         opWrapper.configure(wrapperStructPose, wrapperStructFace, wrapperStructHand, wrapperStructExtra,
-                            wrapperStructInput{}, wrapperStructOutput);
+                            wrapperStructInput, wrapperStructOutput);
         // Set to single-thread running (to debug and/or reduce latency)
         if (FLAGS_disable_multi_thread)
             opWrapper.disableMultiThreading();
