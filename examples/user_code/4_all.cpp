@@ -412,10 +412,10 @@ public:
                       pastDatumsPtr = datumsPtr;
                     float trigger = armMovement(pastDatumsPtr, datumsPtr);
                     if (trigger < 0) {
-                      //swipe left trigger
+                      //swipe right trigger
                       printf("LEFT TO RIGHT\n");
                     } else if (trigger > 0) {
-                      //swipe right trigger
+                      //swipe left trigger
                       printf("RIGHT TO LEFT\n");
                     }
                     pastDatumsPtr = datumsPtr;
@@ -432,7 +432,7 @@ public:
     float armMovement(std::shared_ptr<std::vector<UserDatum>>& pastPtr,
       std::shared_ptr<std::vector<UserDatum>>& presentPtr)
     {
-      static float threshold = 10;
+      static float threshold = 25;
 
       static int xIndex = 0;
       auto& pastKeypoints = pastPtr->at(0).poseKeypoints;
@@ -453,10 +453,19 @@ public:
 
     float majorHorizontal(std::vector<float> movement)
     {
-      if(std::abs(movement[0]) > std::abs(movement[2]))
-        return movement[0];
+      static float zeroEpsilon = 1.5;
+      if ((movement[0] < zeroEpsilon && movement[2] < zeroEpsilon) ||
+          (movement[0] > -zeroEpsilon && movement[2] > -zeroEpsilon))
+      {
+        if(std::abs(movement[0]) > std::abs(movement[2]))
+          return movement[0];
+        else
+          return movement[2];
+      }
       else
-        return movement[2];
+      {
+        return 0.0;
+      }
     }
 
     // RW_x, RW_y, LW_x, LW_y
