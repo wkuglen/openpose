@@ -223,11 +223,13 @@ struct UserDatum : public op::Datum
     std::vector<float> boundingBox;
     // vector is minX, minY, maxX, maxY
 
+    std::vector<std::vector<float>> boxes;
+
     UserDatum(const bool boolThatUserNeedsForSomeReason_ = false) :
         boolThatUserNeedsForSomeReason{boolThatUserNeedsForSomeReason_}
     {
-      float myints[] = {1000000,1000000,0,0};
-      boundingBox = std::vector<float>(myints, myints + sizeof(myints) / sizeof(float));
+      float max_box_bounds[] = {1000000,1000000,0,0};
+      boundingBox = std::vector<float>(max_box_bounds, max_box_bounds + sizeof(max_box_bounds) / sizeof(float));
     }
 
     std::string boxToString(const int person = 0)
@@ -237,6 +239,13 @@ struct UserDatum : public op::Datum
                                 + std::to_string(boundingBox[1]) + ") ("
                                 + std::to_string(boundingBox[2]) + ", "
                                 + std::to_string(boundingBox[3]) + ")";
+    }
+
+    void commitBox()
+    {
+      float max_box_bounds[] = {1000000,1000000,0,0};
+      boxes.push_back(boundingBox);
+      boundingBox = std::vector<float>(max_box_bounds, max_box_bounds + sizeof(max_box_bounds) / sizeof(float));
     }
 };
 
@@ -390,6 +399,7 @@ public:
                         //                           + std::to_string(ud.boundingBox[2]) + ", "
                         //                           + std::to_string(ud.boundingBox[3]) + ")");
                         op::log(datum.boxToString(person));
+                        datum.commitBox();
                     }
                     op::log(" ");
                 }
@@ -475,17 +485,22 @@ public:
                 }
 
                 // Display rendered output image
-
                 cv::Mat& outputImg = datumsPtr->at(0).cvOutputData;
-                // and its top left corner...
-                cv::Point pt1(datumsPtr->at(0).boundingBox[0], datumsPtr->at(0).boundingBox[1]);
-                // and its bottom right corner.
-                cv::Point pt2(datumsPtr->at(0).boundingBox[2], datumsPtr->at(0).boundingBox[3]);
-                // These two calls...
-                cv::rectangle(outputImg, pt1, pt2, cv::Scalar(0, 255, 0));
+
+                int box_i = 0;
+                int boxes = datumsPtr->at(0).boxes.size();
+                while (box_i < boxes){
+                  // and its top left corner...
+                  cv::Point pt1(datumsPtr->at(0).boxes[box_i][0], datumsPtr->at(0).boxes[box_i][1]);
+                  // and its bottom right corner.
+                  cv::Point pt2(datumsPtr->at(0).boxes[box_i][2], datumsPtr->at(0).boxes[box_i][3]);
+                  // These two calls...
+                  cv::rectangle(outputImg, pt1, pt2, cv::Scalar(0, 255, 0));
+                  box_i++;
+                }
 
                 cv::imshow("User worker GUI", outputImg);//datumsPtr->at(0).cvOutputData);
-                cv::rectangle(outputImg, pt1, pt2, cv::Scalar(0, 255, 0));
+                // cv::rectangle(outputImg, pt1, pt2, cv::Scalar(0, 255, 0));
                 // op::log(datumsPtr->at(0).cvOutputData);
                 // Display image and sleeps at least 1 ms (it usually sleeps ~5-10 msec to display the image)
                 const char key = (char)cv::waitKey(1);
