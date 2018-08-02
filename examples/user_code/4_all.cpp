@@ -325,6 +325,7 @@ private:
 
 
 std::shared_ptr<std::vector<UserDatum>> pastDatumsPtr (nullptr);
+bool triggerCooldown = false;
 
 // This worker will just invert the image
 class WUserPostProcessing : public op::Worker<std::shared_ptr<std::vector<UserDatum>>>
@@ -411,12 +412,17 @@ public:
                     if (pastDatumsPtr == nullptr)
                       pastDatumsPtr = datumsPtr;
                     float trigger = armMovement(pastDatumsPtr, datumsPtr);
-                    if (trigger < 0) {
+                    if (trigger < 0 && !triggerCooldown) {
                       //swipe right trigger
                       printf("LEFT TO RIGHT\n");
-                    } else if (trigger > 0) {
+                      triggerCooldown = true;
+                    } else if (trigger > 0 && !triggerCooldown) {
                       //swipe left trigger
                       printf("RIGHT TO LEFT\n");
+                      triggerCooldown = true;
+                    } else if (triggerCooldown){
+                      //reset triggerCooldown
+                      triggerCooldown = false;
                     }
                     pastDatumsPtr = datumsPtr;
                 }
