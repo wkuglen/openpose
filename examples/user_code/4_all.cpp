@@ -42,6 +42,18 @@ DEFINE_bool(disable_multi_thread,       false,          "It would slightly reduc
 DEFINE_int32(profile_speed,             1000,           "If PROFILER_ENABLED was set in CMake or Makefile.config files, OpenPose will show some"
                                                         " runtime statistics at this frame number.");
 // Producer
+DEFINE_int32(camera,                    -1,             "The camera index for cv::VideoCapture. Integer in the range [0, 9]. Select a negative"
+                                                        " number (by default), to auto-detect and open the first available camera.");
+DEFINE_string(camera_resolution,        "-1x-1",        "Set the camera resolution (either `--camera` or `--flir_camera`). `-1x-1` will use the"
+                                                        " default 1280x720 for `--camera`, or the maximum flir camera resolution available for"
+                                                        " `--flir_camera`");
+DEFINE_double(camera_fps,               30.0,           "Frame rate for the webcam (also used when saving video). Set this value to the minimum"
+                                                        " value between the OpenPose displayed speed and the webcam real frame rate.");
+DEFINE_string(video,                    "",             "Use a video file instead of the camera. Use `examples/media/video.avi` for our default"
+                                                        " example video.");
+DEFINE_string(image_dir,                "",             "Process a directory of images. Use `examples/media/` for our default example folder with 20"
+                                                        " images. Read all standard formats (jpg, png, bmp, etc.).");
+
 DEFINE_string(image_dir,                "examples/media/",      "Process a directory of images. Read all standard formats (jpg, png, bmp, etc.).");
 DEFINE_double(camera_fps,               30.0,           "Frame rate for the webcam (also used when saving video). Set this value to the minimum"
                                                         " value between the OpenPose displayed speed and the webcam real frame rate.");
@@ -509,6 +521,12 @@ int openPoseTutorialWrapper2()
         const auto faceNetInputSize = op::flagsToPoint(FLAGS_face_net_resolution, "368x368 (multiples of 16)");
         // handNetInputSize
         const auto handNetInputSize = op::flagsToPoint(FLAGS_hand_net_resolution, "368x368 (multiples of 16)");
+        // producerType
+        const auto producerSharedPtr = op::flagsToProducer(FLAGS_image_dir, FLAGS_video, FLAGS_ip_camera, FLAGS_camera,
+                                                           FLAGS_flir_camera, FLAGS_camera_resolution, FLAGS_camera_fps,
+                                                           FLAGS_camera_parameter_folder, !FLAGS_frame_keep_distortion,
+                                                           (unsigned int) FLAGS_3d_views, FLAGS_flir_camera_index);
+
         // poseModel
         const auto poseModel = op::flagsToPoseModel(FLAGS_model_pose);
         // JSON saving
@@ -570,6 +588,9 @@ int openPoseTutorialWrapper2()
         const auto displayMode = op::DisplayMode::NoDisplay;
         const bool guiVerbose = false;
         const bool fullScreen = false;
+        const op::WrapperStructInput wrapperStructInput{
+            producerSharedPtr, FLAGS_frame_first, FLAGS_frame_last, FLAGS_process_real_time, FLAGS_frame_flip,
+            FLAGS_frame_rotate, FLAGS_frames_repeat};
         const op::WrapperStructOutput wrapperStructOutput{
             displayMode, guiVerbose, fullScreen, FLAGS_write_keypoint,
             op::stringToDataFormat(FLAGS_write_keypoint_format), FLAGS_write_json, FLAGS_write_coco_json,
@@ -578,7 +599,7 @@ int openPoseTutorialWrapper2()
             FLAGS_write_bvh, FLAGS_udp_host, FLAGS_udp_port};
         // Configure wrapper
         opWrapper.configure(wrapperStructPose, wrapperStructFace, wrapperStructHand, wrapperStructExtra,
-                            op::WrapperStructInput{}, wrapperStructOutput);
+                            wrapperStructInput{}, wrapperStructOutput);
         // Set to single-thread running (to debug and/or reduce latency)
         if (FLAGS_disable_multi_thread)
             opWrapper.disableMultiThreading();
