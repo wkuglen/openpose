@@ -28,6 +28,8 @@
 // OpenPose dependencies
 #include <openpose/headers.hpp>
 
+#include "triggers.cpp"
+
 // See all the available parameter options withe the `--help` flag. E.g. `build/examples/openpose/openpose.bin --help`
 // Note: This command will show you flags for other unnecessary 3rdparty files. Check only the flags for the OpenPose
 // executable. E.g. for `openpose.bin`, look for `Flags from examples/openpose/openpose.cpp:`.
@@ -413,12 +415,12 @@ public:
                       pastDatumsPtr = datumsPtr;
                     float trigger = armMovement(pastDatumsPtr, datumsPtr);
                     if (trigger < 0 && !triggerCooldown) {
-                      //swipe right trigger
-                      printf("LEFT TO RIGHT\n");
+                      //swipe to right trigger
+                      swipeLeftToRight();
                       triggerCooldown = true;
                     } else if (trigger > 0 && !triggerCooldown) {
-                      //swipe left trigger
-                      printf("RIGHT TO LEFT\n");
+                      //swipe to left trigger
+                      swipeRightToLeft();
                       triggerCooldown = true;
                     } else if (triggerCooldown){
                       //reset triggerCooldown
@@ -554,8 +556,6 @@ private:
 // This worker will just read and return all the jpg files in a directory
 class WUserOutput : public op::WorkerConsumer<std::shared_ptr<std::vector<UserDatum>>>
 {
-// private:
-//   UserDatum ud;
 
 public:
   WUserOutput()
