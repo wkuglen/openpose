@@ -222,6 +222,15 @@ struct UserDatum : public op::Datum
       float myints[] = {1000000,1000000,0,0};
       boundingBox = std::vector<float>(myints, myints + sizeof(myints) / sizeof(float));
     }
+
+    std::string boxToString(const int person = 0)
+    {
+      return "Person " + std::to_string(person) +
+              " Bounding Box:\n\t(" + std::to_string(boundingBox[0]) + ", "
+                                + std::to_string(boundingBox[1]) + ") ("
+                                + std::to_string(boundingBox[2]) + ", "
+                                + std::to_string(boundingBox[3]) + ")";
+    }
 };
 
 // The W-classes can be implemented either as a template or as simple classes given
@@ -296,14 +305,14 @@ private:
 // This worker will just invert the image
 class WUserPostProcessing : public op::Worker<std::shared_ptr<std::vector<UserDatum>>>
 {
-private:
-  UserDatum ud;
+// private:
+//   UserDatum ud;
 
 public:
     WUserPostProcessing()
     {
         // User's constructor here
-        ud = UserDatum();
+        // ud = new UserDatum();
     }
 
     void initializationOnThread() {}
@@ -319,6 +328,8 @@ public:
             {
                 for (auto& datum : *datumsPtr)
                 {
+                    // ud = new UserDatum();
+                    op::log(datum.boxToString());
                     cv::bitwise_not(datum.cvOutputData, datum.cvOutputData);
                     // Show in command line the resulting pose keypoints for body, face and hands
                     op::log("\nStats:");
@@ -342,28 +353,29 @@ public:
                                   if (xyscore == 0) {
                                     // IF x
                                     auto point = poseKeypoints[{person, bodyPart, xyscore}];
-                                    if (point < ud.boundingBox[0])
-                                      ud.boundingBox[0] = point;
-                                    if (point > ud.boundingBox[2])
-                                      ud.boundingBox[2] = point;
+                                    if (point < datum.boundingBox[0])
+                                      datum.boundingBox[0] = point;
+                                    if (point > datum.boundingBox[2])
+                                      datum.boundingBox[2] = point;
 
                                   } else if (xyscore == 1) {
                                     // IF y
                                     auto point = poseKeypoints[{person, bodyPart, xyscore}];
-                                    if (point < ud.boundingBox[1])
-                                      ud.boundingBox[1] = point;
-                                    if (point > ud.boundingBox[3])
-                                      ud.boundingBox[3] = point;
+                                    if (point < datum.boundingBox[1])
+                                      datum.boundingBox[1] = point;
+                                    if (point > datum.boundingBox[3])
+                                      datum.boundingBox[3] = point;
                                   }
                                 }
                             }
                             // op::log(valueToPrint);
                         }
-                        op::log("Person " + std::to_string(person) +
-                                " Bounding Box:\n\t(" + std::to_string(ud.boundingBox[0]) + ", "
-                                                  + std::to_string(ud.boundingBox[1]) + ") ("
-                                                  + std::to_string(ud.boundingBox[2]) + ", "
-                                                  + std::to_string(ud.boundingBox[3]) + ")");
+                        // op::log("Person " + std::to_string(person) +
+                        //         " Bounding Box:\n\t(" + std::to_string(ud.boundingBox[0]) + ", "
+                        //                           + std::to_string(ud.boundingBox[1]) + ") ("
+                        //                           + std::to_string(ud.boundingBox[2]) + ", "
+                        //                           + std::to_string(ud.boundingBox[3]) + ")");
+                        op::log(datum.boxToString(person));
                     }
                     op::log(" ");
                 }
@@ -380,14 +392,15 @@ public:
 // This worker will just read and return all the jpg files in a directory
 class WUserOutput : public op::WorkerConsumer<std::shared_ptr<std::vector<UserDatum>>>
 {
-private:
-  UserDatum ud;
+// private:
+//   UserDatum ud;
 
 public:
   WUserOutput()
   {
       // User's constructor here
-      ud = UserDatum();
+      // ud = new UserDatum();
+      // ud = wUserPostProcessing
   }
 
     void initializationOnThread() {}
@@ -451,9 +464,9 @@ public:
 
                 cv::Mat& outputImg = datumsPtr->at(0).cvOutputData;
                 // and its top left corner...
-                cv::Point pt1(ud.boundingBox[0], ud.boundingBox[1]);
+                cv::Point pt1(datumsPtr->at(0).boundingBox[0], datumsPtr->at(0).boundingBox[1]);
                 // and its bottom right corner.
-                cv::Point pt2(ud.boundingBox[2], ud.boundingBox[3]);
+                cv::Point pt2(datumsPtr->at(0).boundingBox[2], datumsPtr->at(0).boundingBox[3]);
                 // These two calls...
                 cv::rectangle(outputImg, pt1, pt2, cv::Scalar(0, 255, 0));
 
