@@ -324,18 +324,21 @@ private:
 ************************************************/
 
 
+std::shared_ptr<std::vector<UserDatum>> pastDatumsPtr (nullptr);
 
 // This worker will just invert the image
 class WUserPostProcessing : public op::Worker<std::shared_ptr<std::vector<UserDatum>>>
 {
-// private:
-//   UserDatum ud;
+private:
+  // std::shared_ptr<std::vector<UserDatum>> pastDatumsPtr;// = nullptr;
+  // auto pastDatumsPtr;
+  bool invert = false;
 
 public:
     WUserPostProcessing()
     {
         // User's constructor here
-        // ud = new UserDatum();
+        // pastDatumsPtr = nullptr;
     }
 
     void initializationOnThread() {}
@@ -352,8 +355,9 @@ public:
                 for (auto& datum : *datumsPtr)
                 {
                     // ud = new UserDatum();
-                    op::log(datum.boxToString());
-                    cv::bitwise_not(datum.cvOutputData, datum.cvOutputData);
+                    // op::log(datum.boxToString());
+                    if (invert)
+                      cv::bitwise_not(datum.cvOutputData, datum.cvOutputData);
                     // Show in command line the resulting pose keypoints for body, face and hands
                     op::log("\nStats:");
                     // Accesing each element of the keypoints
@@ -402,6 +406,19 @@ public:
                         datum.commitBox();
                     }
                     op::log(" ");
+
+
+                    if (pastDatumsPtr == nullptr)
+                      pastDatumsPtr = datumsPtr;
+                    float trigger = armMovement(pastDatumsPtr, datumsPtr);
+                    if (trigger < 0) {
+                      //swipe left trigger
+                      printf("LEFT TO RIGHT\n");
+                    } else if (trigger > 0) {
+                      //swipe right trigger
+                      printf("RIGHT TO LEFT\n");
+                    }
+                    pastDatumsPtr = datumsPtr;
                 }
             }
         }
@@ -411,6 +428,98 @@ public:
             op::error(e.what(), __LINE__, __FUNCTION__, __FILE__);
         }
     }
+
+    float armMovement(std::shared_ptr<std::vector<UserDatum>>& pastPtr,
+      std::shared_ptr<std::vector<UserDatum>>& presentPtr)
+    {
+      static float threshold = 10;
+
+      static int xIndex = 0;
+      auto& pastKeypoints = pastPtr->at(0).poseKeypoints;
+      auto& presentKeypoints = presentPtr->at(0).poseKeypoints;
+      int numPeople = std::min(pastKeypoints.getSize(0), presentKeypoints.getSize(0));
+
+      int i = 0;
+      while (i < numPeople)
+      {
+        float movement = majorHorizontal(armMovementSoloPerson(pastPtr, presentPtr, i));
+        if (std::abs(movement) >= threshold) {
+          return movement;
+        }
+        i++;
+      }
+      return 0.0;
+    }
+
+    float majorHorizontal(std::vector<float> movement)
+    {
+      if(std::abs(movement[0]) > std::abs(movement[2]))
+        return movement[0];
+      else
+        return movement[2];
+    }
+
+    // RW_x, RW_y, LW_x, LW_y
+    std::vector<float> armMovementSoloPerson(std::shared_ptr<std::vector<UserDatum>>& pastPtr,
+      std::shared_ptr<std::vector<UserDatum>>& presentPtr, int person)
+    {
+      auto& pastKeypoints = pastPtr->at(0).poseKeypoints;
+      auto& presentKeypoints = presentPtr->at(0).poseKeypoints;
+
+      static int rWrist = 4;
+      static int lWrist = 7;
+      static int xIndex = 0;
+      static int yIndex = 1;
+      auto pastRW_x = pastKeypoints[{person, rWrist, xIndex}];
+      auto pastRW_y = pastKeypoints[{person, rWrist, yIndex}];
+      auto pastLW_x = pastKeypoints[{person, lWrist, xIndex}];
+      auto pastLW_y = pastKeypoints[{person, lWrist, yIndex}];
+
+      auto presentRW_x = presentKeypoints[{person, rWrist, xIndex}];
+      auto presentRW_y = presentKeypoints[{person, rWrist, yIndex}];
+      auto presentLW_x = presentKeypoints[{person, lWrist, xIndex}];
+      auto presentLW_y = presentKeypoints[{person, lWrist, yIndex}];
+
+      auto moveRW = delta(pastRW_x, pastRW_y, presentRW_x, presentRW_y);
+      auto moveLW = delta(pastLW_x, pastLW_y, presentLW_x, presentLW_y);
+
+      std::vector<float> movement = std::vector<float>();
+      movement.push_back(moveRW[xIndex]);
+      movement.push_back(moveRW[yIndex]);
+      movement.push_back(moveLW[xIndex]);
+      movement.push_back(moveLW[yIndex]);
+      return movement;
+    }
+
+    /*const std::map<unsigned int, std::string> POSE_MPI_BODY_PARTS {
+            {0,  "Head"},
+            {1,  "Neck"},
+            {2,  "RShoulder"},
+            {3,  "RElbow"},
+          {4,  "RWrist"},
+            {5,  "LShoulder"},
+            {6,  "LElbow"},
+          {7,  "LWrist"},
+            {8,  "RHip"},
+            {9,  "RKnee"},
+            {10, "RAnkle"},
+            {11, "LHip"},
+            {12, "LKnee"},
+            {13, "LAnkle"},
+            {14, "Chest"},
+            {15, "Background"}
+        };*/
+private:
+    std::vector<float> delta(float pastX, float pastY, float presentX, float presentY)
+    {
+      float x = presentX - pastX;
+      float y = presentY - pastY;
+      std::vector<float> change = std::vector<float>();
+      change.push_back(x);
+      change.push_back(y);
+      return change;
+    }
+
 };
 
 // This worker will just read and return all the jpg files in a directory
@@ -495,7 +604,15 @@ public:
                   // and its bottom right corner.
                   cv::Point pt2(datumsPtr->at(0).boxes[box_i][2], datumsPtr->at(0).boxes[box_i][3]);
                   // These two calls...
-                  cv::rectangle(outputImg, pt1, pt2, cv::Scalar(0, 255, 0));
+                  cv::Scalar color;
+                  if (box_i == 0) {
+                    color = cv::Scalar(255,0,0);
+                  } else if (box_i == 1) {
+                    color = cv::Scalar(0,255,0);
+                  } else {
+                    color = cv::Scalar(0,0,255);
+                  }
+                  cv::rectangle(outputImg, pt1, pt2, color);
                   box_i++;
                 }
 
