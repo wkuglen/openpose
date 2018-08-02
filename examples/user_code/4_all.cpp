@@ -472,6 +472,8 @@ public:
     std::vector<float> armMovementSoloPerson(std::shared_ptr<std::vector<UserDatum>>& pastPtr,
       std::shared_ptr<std::vector<UserDatum>>& presentPtr, int person)
     {
+      if(!armsOnScreen(pastPtr, presentPtr, person))
+        return std::vector<float>(4, 0.0);
       auto& pastKeypoints = pastPtr->at(0).poseKeypoints;
       auto& presentKeypoints = presentPtr->at(0).poseKeypoints;
 
@@ -527,6 +529,18 @@ private:
       change.push_back(x);
       change.push_back(y);
       return change;
+    }
+
+    bool armsOnScreen(std::shared_ptr<std::vector<UserDatum>>& pastPtr,
+      std::shared_ptr<std::vector<UserDatum>>& presentPtr, int person)
+    {
+      auto& pastKeypoints = pastPtr->at(0).poseKeypoints;
+      auto& presentKeypoints = presentPtr->at(0).poseKeypoints;
+
+      bool armsOn = true;
+      armsOn = armsOn && (pastKeypoints[{person, 4, 2}] != 0.0 || pastKeypoints[{person, 7, 2}] != 0.0);
+      armsOn = armsOn && (presentKeypoints[{person, 4, 2}] != 0.0 || presentKeypoints[{person, 7, 2}] != 0.0);
+      return armsOn;
     }
 
 };
