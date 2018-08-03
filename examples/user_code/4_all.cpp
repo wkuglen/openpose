@@ -417,21 +417,24 @@ public:
 
                     if (trigger[0] < 0 && !triggerCooldown) {
                       //swipe to right trigger
-                      // swipeLeftToRight();
-                      printf("LEFT TO RIGHT\n");
+                      // openURL();
+                      swipeLeftToRight();
+                      // printf("LEFT TO RIGHT\n");
                       triggerCooldown = true;
                     } else if (trigger[0] > 0 && !triggerCooldown) {
                       //swipe to left trigger
-                      // swipeRightToLeft();
-                      printf("Right to Left\n");
+                      swipeRightToLeft();
+                      // printf("Right to Left\n");
                       triggerCooldown = true;
                     } else if (trigger[1] > 0 && !triggerCooldown) {
                       //swipe to bottom trigger
-                      printf("TOP TO BOTTOM\n");
+                      swipeTopToBottom();
+                      // printf("TOP TO BOTTOM\n");
                       triggerCooldown = true;
                     } else if (trigger[1] < 0 && !triggerCooldown) {
                       //swipe to top trigger
-                      printf("BOTTOM TO TOP\n");
+                      swipeBottomToTop();
+                      // printf("BOTTOM TO TOP\n");
                       triggerCooldown = true;
                     }else if (triggerCooldown){
                       //reset triggerCooldown
@@ -470,21 +473,21 @@ public:
         std::vector<float> soloPerson = armMovementSoloPerson(pastPtr, presentPtr, i);
         movementH = majorHorizontal(soloPerson);
         movementV = majorVertical(soloPerson);
-        std::string str = " ";
-        str = str + std::to_string(movementH) + ", " + std::to_string(movementV);
-        printf("%s\n", str.c_str());
-        if (std::abs(movementH) >= threshold){// && std::abs(movementV) < thresholdV) {
+        // std::string str = " ";
+        // str = str + std::to_string(movementH) + ", " + std::to_string(movementV);
+        // printf("%s\n", str.c_str());
+        if (std::abs(movementH) >= threshold && std::abs(movementV) < thresholdV) {
+          movementV = 0.0;
+          movement.push_back(movementH);
+          movement.push_back(movementV);
+          return movement;
+        } else if (std::abs(movementH) >= threshold) {
           movementV = 0.0;
           movement.push_back(movementH);
           movement.push_back(movementV);
           return movement;
         } else if (std::abs(movementV) >= thresholdV) {
           movementH = 0.0;
-          movement.push_back(movementH);
-          movement.push_back(movementV);
-          return movement;
-        } else if (std::abs(movementH) >= threshold) {
-          movementV = 0.0;
           movement.push_back(movementH);
           movement.push_back(movementV);
           return movement;

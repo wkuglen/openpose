@@ -28,7 +28,7 @@ void swipeLeftToRight() {
 }
 
 void swipeTopToBottom() {
-  printf("LEFT TO RIGHT trigger\n");
+  printf("TOP TO BOTTOM trigger\n");
   /* code */
   char cmd [1000];
   sprintf(cmd, "osascript -e 'tell application \"System Events\"' -e '	key code 46 using {command down}' -e 'end tell'");
@@ -36,10 +36,10 @@ void swipeTopToBottom() {
 }
 
 void swipeBottomToTop() {
-  printf("LEFT TO RIGHT trigger\n");
+  printf("BOTTOM TO TOP trigger\n");
   /* code */
   char cmd [1000];
-  sprintf(cmd, "osascript -e 'tell application \"System Events\"' -e '	key code 3 using {control down command down}' -e 'end tell'");
+  sprintf(cmd, "osascript -e 'tell application \"System Events\"' -e '	key code 3 using {control down, command down}' -e 'end tell'");
   system(cmd);
 }
 
