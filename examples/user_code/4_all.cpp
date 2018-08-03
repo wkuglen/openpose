@@ -440,7 +440,7 @@ public:
     float armMovement(std::shared_ptr<std::vector<UserDatum>>& pastPtr,
       std::shared_ptr<std::vector<UserDatum>>& presentPtr)
     {
-      static float threshold = 100;
+      static float threshold = 25;
 
       static int xIndex = 0;
       auto& pastKeypoints = pastPtr->at(0).poseKeypoints;
