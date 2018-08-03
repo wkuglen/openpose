@@ -470,6 +470,9 @@ public:
       int i = 0;
       while (i < numPeople)
       {
+        if(feetOnScreen(presentPtr, i)) {
+          playSong();
+        }
         std::vector<float> soloPerson = armMovementSoloPerson(pastPtr, presentPtr, i);
         movementH = majorHorizontal(soloPerson);
         movementV = majorVertical(soloPerson);
@@ -577,10 +580,10 @@ public:
           {7,  "LWrist"},
             {8,  "RHip"},
             {9,  "RKnee"},
-            {10, "RAnkle"},
+          {10, "RAnkle"},
             {11, "LHip"},
             {12, "LKnee"},
-            {13, "LAnkle"},
+          {13, "LAnkle"},
             {14, "Chest"},
             {15, "Background"}
         };*/
@@ -607,6 +610,13 @@ private:
       return armsOn;
     }
 
+    bool feetOnScreen(std::shared_ptr<std::vector<UserDatum>>& presentPtr, int person)
+    {
+      auto& presentKeypoints = presentPtr->at(0).poseKeypoints;
+
+      return presentKeypoints[{person, 10, 2}] != 0.0 || presentKeypoints[{person, 13, 2}] != 0.0;
+
+    }
 };
 
 // This worker will just read and return all the jpg files in a directory

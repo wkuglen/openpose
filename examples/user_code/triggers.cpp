@@ -64,3 +64,9 @@ void openURL() {
   sprintf(cmd, "osascript -e 'set myLink to \"https://www.youtube.com/watch?v=6bywWYOzZdY\"' -e 'tell application \"Google Chrome\"' -e '	tell its window 1' -e '		set theTabs to count of tabs' -e '		set URL of tab 1 to myLink' -e '	end tell' -e 'end tell' -e 'tell application \"Google Chrome\" to set active tab index of first window to 1'");
   system(cmd);
 }
+
+void playSong() {
+  char cmd [1000];
+  sprintf(cmd, "osascript -e 'tell application \"iTunes\"' -e '	play track \"hip_hop_happend_song\"' -e 'end tell'");
+  system(cmd);
+}
