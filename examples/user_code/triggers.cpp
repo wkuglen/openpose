@@ -27,6 +27,22 @@ void swipeLeftToRight() {
   system(cmd);
 }
 
+void swipeTopToBottom() {
+  printf("LEFT TO RIGHT trigger\n");
+  /* code */
+  char cmd [1000];
+  sprintf(cmd, "osascript -e 'tell application \"System Events\"' -e '	key code 46 using {command down}' -e 'end tell'");
+  system(cmd);
+}
+
+void swipeBottomToTop() {
+  printf("LEFT TO RIGHT trigger\n");
+  /* code */
+  char cmd [1000];
+  sprintf(cmd, "osascript -e 'tell application \"System Events\"' -e '	key code 3 using {control down command down}' -e 'end tell'");
+  system(cmd);
+}
+
 void swipeChromeRight() {
   printf("RIGHT TO LEFT trigger\n");
   /* code */
