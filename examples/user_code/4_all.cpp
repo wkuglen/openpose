@@ -413,16 +413,27 @@ public:
 
                     if (pastDatumsPtr == nullptr)
                       pastDatumsPtr = datumsPtr;
-                    float trigger = armMovement(pastDatumsPtr, datumsPtr);
-                    if (trigger < 0 && !triggerCooldown) {
+                    std::vector<float> trigger = armMovement(pastDatumsPtr, datumsPtr);
+
+                    if (trigger[0] < 0 && !triggerCooldown) {
                       //swipe to right trigger
-                      swipeLeftToRight();
+                      // swipeLeftToRight();
+                      printf("LEFT TO RIGHT\n");
                       triggerCooldown = true;
-                    } else if (trigger > 0 && !triggerCooldown) {
+                    } else if (trigger[0] > 0 && !triggerCooldown) {
                       //swipe to left trigger
-                      swipeRightToLeft();
+                      // swipeRightToLeft();
+                      printf("Right to Left\n");
                       triggerCooldown = true;
-                    } else if (triggerCooldown){
+                    } else if (trigger[1] > 0 && !triggerCooldown) {
+                      //swipe to left trigger
+                      printf("POSITIVE VERTICAL\n");
+                      triggerCooldown = true;
+                    } else if (trigger[1] < 0 && !triggerCooldown) {
+                                            //swipe to left trigger
+                      printf("Negatice VERTICAL\n");
+                      triggerCooldown = true;
+                    }else if (triggerCooldown){
                       //reset triggerCooldown
                       triggerCooldown = false;
                     }
@@ -437,26 +448,52 @@ public:
         }
     }
 
-    float armMovement(std::shared_ptr<std::vector<UserDatum>>& pastPtr,
+    //horizontal and vertical
+    std::vector<float> armMovement(std::shared_ptr<std::vector<UserDatum>>& pastPtr,
       std::shared_ptr<std::vector<UserDatum>>& presentPtr)
     {
       static float threshold = 25;
+      static float thresholdV = 45;
 
       static int xIndex = 0;
       auto& pastKeypoints = pastPtr->at(0).poseKeypoints;
       auto& presentKeypoints = presentPtr->at(0).poseKeypoints;
       int numPeople = std::min(pastKeypoints.getSize(0), presentKeypoints.getSize(0));
 
+      std::vector<float> movement = std::vector<float>();
+      float movementH = 0.0;
+      float movementV = 0.0;
+
       int i = 0;
       while (i < numPeople)
       {
-        float movement = majorHorizontal(armMovementSoloPerson(pastPtr, presentPtr, i));
-        if (std::abs(movement) >= threshold) {
+        std::vector<float> soloPerson = armMovementSoloPerson(pastPtr, presentPtr, i);
+        movementH = majorHorizontal(soloPerson);
+        movementV = majorVertical(soloPerson);
+        std::string str = " ";
+        str = str + std::to_string(movementH) + ", " + std::to_string(movementV);
+        printf("%s\n", str.c_str());
+        if (std::abs(movementH) >= threshold){// && std::abs(movementV) < thresholdV) {
+          movementV = 0.0;
+          movement.push_back(movementH);
+          movement.push_back(movementV);
+          return movement;
+        } else if (std::abs(movementV) >= thresholdV) {
+          movementH = 0.0;
+          movement.push_back(movementH);
+          movement.push_back(movementV);
+          return movement;
+        } else if (std::abs(movementH) >= threshold) {
+          movementV = 0.0;
+          movement.push_back(movementH);
+          movement.push_back(movementV);
           return movement;
         }
         i++;
       }
-      return 0.0;
+      movement.push_back(0.0);
+      movement.push_back(0.0);
+      return movement;
     }
 
     float majorHorizontal(std::vector<float> movement)
@@ -476,6 +513,22 @@ public:
       }
     }
 
+    float majorVertical(std::vector<float> movement)
+    {
+      static float zeroEpsilon = 1.5;
+      if ((movement[1] < zeroEpsilon && movement[3] < zeroEpsilon) ||
+          (movement[1] > -zeroEpsilon && movement[3] > -zeroEpsilon))
+      {
+        if(std::abs(movement[1]) > std::abs(movement[3]))
+          return movement[1];
+        else
+          return movement[3];
+      }
+      else
+      {
+        return 0.0;
+      }
+    }
     // RW_x, RW_y, LW_x, LW_y
     std::vector<float> armMovementSoloPerson(std::shared_ptr<std::vector<UserDatum>>& pastPtr,
       std::shared_ptr<std::vector<UserDatum>>& presentPtr, int person)
