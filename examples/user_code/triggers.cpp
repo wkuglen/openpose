@@ -14,9 +14,15 @@
 void swipeRightToLeft() {
   printf("RIGHT TO LEFT trigger\n");
   /* code */
+  char cmd [1000];
+  sprintf(cmd, "osascript -e 'tell application \"Google Chrome\" to set active tab index of first window to ((get the active tab index of first window of application \"Google Chrome\") + 1)'");
+  system(cmd);
 }
 
 void swipeLeftToRight() {
   printf("LEFT TO RIGHT trigger\n");
   /* code */
+  char cmd [1000];
+  sprintf(cmd, "osascript -e 'tell application \"Google Chrome\" to set active tab index of first window to ((get the active tab index of first window of application \"Google Chrome\") - 1)'");
+  system(cmd);
 }
