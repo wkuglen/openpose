@@ -426,12 +426,12 @@ public:
                       printf("Right to Left\n");
                       triggerCooldown = true;
                     } else if (trigger[1] > 0 && !triggerCooldown) {
-                      //swipe to left trigger
-                      printf("POSITIVE VERTICAL\n");
+                      //swipe to bottom trigger
+                      printf("TOP TO BOTTOM\n");
                       triggerCooldown = true;
                     } else if (trigger[1] < 0 && !triggerCooldown) {
-                                            //swipe to left trigger
-                      printf("Negatice VERTICAL\n");
+                      //swipe to top trigger
+                      printf("BOTTOM TO TOP\n");
                       triggerCooldown = true;
                     }else if (triggerCooldown){
                       //reset triggerCooldown
